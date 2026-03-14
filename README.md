@@ -58,20 +58,26 @@ Still experimental. No large Phase 3 double-blind placebo-controlled results yet
 
 ## Build & Run
 
+To build and run this application, you can use the following Make commands:
+
+- `make all` - Build the project
+- `make clean` - Clean compiled files  
+- `make run` - Build and run the project
+- `make install-deps` - Install required dependencies (SDL2)
+
+The project requires SDL2 development libraries. On macOS with Homebrew, you can install them using:
 ```bash
-# Assuming you have the project folder with main.cpp
+make install-deps
+```
 
-# Option 1: CMake (recommended)
-mkdir build && cd build
-cmake ..
-cmake --build . --config Release
+On Ubuntu/Debian systems, use:
+```bash
+sudo apt install libsdl2-dev
+```
 
-# Option 2: Direct compile (Linux/macOS example)
-g++ -o 40hz_genus ../main.cpp -lSDL2 -O2 -std=c++17
-
-# Run (from graphical desktop session)
-./40hz_genus
-# Or on Windows: 40hz_genus.exe
+After installing dependencies, build and run the application with:
+```bash
+make run
 ```
 
 ## License
