@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <cmath>
+#include <cstdlib>  // For atoi
 
 // Timing constants for 40Hz flicker (25ms per cycle, 12.5ms on/off)
 const float FREQUENCY_HZ = 40.0f;
@@ -16,7 +17,7 @@ const float CARRIER_FREQUENCY = 10000.0f; // High-frequency carrier for clicks
 Uint64 globalSamplePosition = 0;
 float amplitude = 0.4f;
 
-void fillAudioBuffer(void* userdata, Uint8* stream, int len) {
+void fillAudioBuffer(void* /*userdata*/, Uint8* stream, int len) {
     float* buffer = (float*)stream;
     int samples = len / sizeof(float);
     
@@ -42,7 +43,25 @@ void fillAudioBuffer(void* userdata, Uint8* stream, int len) {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Parse command line arguments for session duration
+    int sessionDurationMinutes = 60; // Default to 60 minutes
+
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--duration") == 0 || strcmp(argv[i], "-d") == 0) {
+            if (i + 1 < argc) {
+                sessionDurationMinutes = atoi(argv[i + 1]);
+                if (sessionDurationMinutes <= 0) {
+                    std::cout << "Warning: Invalid duration, using default of 60 minutes" << std::endl;
+                    sessionDurationMinutes = 60;
+                }
+                i++; // Skip the next argument as it was consumed
+            } else {
+                std::cout << "Warning: --duration flag requires a value. Using default of 60 minutes." << std::endl;
+            }
+        }
+    }
+
     // Initialize SDL with video and audio
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
@@ -101,10 +120,11 @@ int main() {
 
     // Timing variables
     Uint64 startTime = SDL_GetPerformanceCounter();
+    Uint64 sessionStart = SDL_GetPerformanceCounter(); // For session timer
     bool flickerOn = true;
     bool running = true;
 
-    // Print startup info
+    // Print startup info - removed session time lines that cause constant printing 
     std::cout << "Starting 40Hz Flicker Application with Audio" << std::endl;
     std::cout << "Press ESC to quit" << std::endl;
     std::cout << "Flicker frequency: " << FREQUENCY_HZ << " Hz" << std::endl;
@@ -114,7 +134,7 @@ int main() {
     while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT || 
+            if (event.type == SDL_QUIT ||
                 (event.key.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
                 running = false;
             }
@@ -123,6 +143,12 @@ int main() {
         // Get current time for precise timing
         Uint64 currentTime = SDL_GetPerformanceCounter();
         double elapsedMs = ((double)(currentTime - startTime) * 1000.0) / (double)SDL_GetPerformanceFrequency();
+        double sessionElapsedSeconds = ((double)(currentTime - sessionStart) * 1.0) / (double)SDL_GetPerformanceFrequency();
+
+        // Check if session has reached maximum duration
+        if (sessionElapsedSeconds >= sessionDurationMinutes * 60.0) {
+            running = false;
+        }
 
         // Switch flicker state every half cycle (12ms)
         if (elapsedMs >= HALF_CYCLE_MS) {
@@ -131,7 +157,7 @@ int main() {
         }
 
         // Set render color based on flicker state and clear screen
-        SDL_SetRenderDrawColor(renderer, 
+        SDL_SetRenderDrawColor(renderer,
                               flickerOn ? 255 : 0,  // Red channel (white or black)
                               flickerOn ? 255 : 0,  // Green channel (white or black)
                               flickerOn ? 255 : 0,  // Blue channel (white or black)
@@ -140,7 +166,7 @@ int main() {
 
         // Present the rendered frame to screen
         SDL_RenderPresent(renderer);
-        
+
         // Small delay to prevent excessive CPU usage while maintaining timing precision
         SDL_Delay(1);
     }
