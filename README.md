@@ -80,8 +80,20 @@ After installing dependencies, build and run the application with:
 make run
 ```
 
+### Usage Examples
+
+- `make run` - Default: Flicker on primary monitor only, 1 minute session
+- `./40hz_genus --all-monitors` - Flicker on all available monitors (up to 2)
+- `./40hz_genus --duration 60 --all-monitors` - 60 minute session on all monitors
+- `./40hz_genus --duration 30` - 30 minute session on primary monitor only
+
+To check your display setup, run:
+```bash
+make display_test && ./display_test
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-> 📝 *This software is provided "as is" without warranty of any kind.*
+> 📝 *This software is provided "as is" without warranty of any kind.*o
